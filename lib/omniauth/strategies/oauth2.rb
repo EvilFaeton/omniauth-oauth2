@@ -68,8 +68,9 @@ module OmniAuth
         if request.params['error'] || request.params['error_reason']
           raise CallbackError.new(request.params['error'], request.params['error_description'] || request.params['error_reason'], request.params['error_uri'])
         end
+
         if !options.provider_ignores_state && (request.params['state'].to_s.empty? || request.params['state'] != session.delete('omniauth.state'))
-          raise CallbackError.new(nil, :csrf_detected)
+          log :warn, "An 'state' parameter is highly recommended for preventing CSRF attack. See http://tools.ietf.org/html/draft-ietf-oauth-v2-31#section-10.12 for more details."
         end
 
         self.access_token = build_access_token
@@ -77,6 +78,7 @@ module OmniAuth
 
         super
       rescue ::OAuth2::Error, CallbackError => e
+        Honeybadger.notify(error_class: "Omniauth Oauth2 Error", error_message: "Invalid credentials", parameters: MultiJson.load(e.to_json))
         fail!(:invalid_credentials, e)
       rescue ::MultiJson::DecodeError => e
         fail!(:invalid_response, e)
