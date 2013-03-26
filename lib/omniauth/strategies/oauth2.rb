@@ -78,7 +78,7 @@ module OmniAuth
 
         super
       rescue ::OAuth2::Error, CallbackError => e
-        Honeybadger.notify(error_class: "Omniauth Oauth2 Error", error_message: "Invalid credentials", parameters: MultiJson.load(e.to_json))
+        Honeybadger.notify(error_class: "Omniauth Oauth2 Error", error_message: "Invalid credentials", parameters: (MultiJson.load(e.to_json) rescue nil))
         fail!(:invalid_credentials, e)
       rescue ::MultiJson::DecodeError => e
         fail!(:invalid_response, e)
